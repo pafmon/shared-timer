@@ -1,0 +1,174 @@
+<html>
+    <head>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+                
+            var socket = io();
+            var t = 15;
+            var i = t;
+
+            socket.emit("sync");
+
+            setInterval(function () {
+                
+                timerDiv = document.getElementById("timer");
+                t--;
+                var minutes = Math.floor(Math.abs(t)/60);
+                var seconds = (Math.abs(t) - minutes*60);
+
+                timerDiv.innerText = 
+                    ((t<0)?"-":"")+
+                    minutes+":"+
+                    ((seconds<10)?"0"+seconds:seconds);
+                
+                var progress = t/i*100;
+                document.getElementById("prog").style["width"] = progress+"%";
+                
+                var baseProgressClassName = "progress-bar progress-bar-striped progress-bar-animated";
+                
+                if  ( progress > 20 && t>0){
+
+                    var backColor = 'black';
+                    var fontColor = 'white';
+                    document.getElementById("prog").className = baseProgressClassName;
+                    
+                    var buttons = document.getElementsByTagName("button");
+                    
+                    for (let btn of buttons) {
+                        btn.className  ="btn btn-outline-primary btn-lg";
+                    }
+
+                } else if ( ( progress <= 20 ) && (progress>0) && t>0 ) {
+
+                    var fontColor = 'black';
+                    var backColor = '#ffbf00';
+                    var buttons = document.getElementsByTagName("button");
+                    for (let btn of buttons) {
+                        btn.className  = "btn btn-outline-dark btn-lg";
+                    }
+                    
+                    document.getElementById("prog").className = baseProgressClassName+" bg-danger";
+                } else if( t <= 0 ) {
+
+                    var fontColor = 'black';
+                    var backColor = '#e60000';
+                    var buttons = document.getElementsByTagName("button");
+                    for (let btn of buttons) {
+                        btn.className  = "btn btn-outline-dark btn-lg";
+                    }
+                    document.getElementById("prog").className = baseProgressClassName+" bg-danger";
+                    document.getElementById("prog").style["width"] = "100%";
+                }
+                document.body.style["color"] = fontColor;
+                document.body.style["background-color"] = backColor;
+
+            },1000);
+
+
+            socket.on('reset', (msg) => {
+                    console.log('Reset ' + msg.data);
+                    t = msg.data;
+                    i = t;
+            });
+
+            function plus(extra){
+                
+                var tReset = t+(extra*60);
+                console.log("tReset: "+tReset);
+                socket.emit("reset", {
+                    data: tReset,
+                });
+
+            }
+
+            
+            function reset(){
+                var minReset = document.getElementById("minReset").value;
+                console.log("mr "+minReset+ " -> "+(isNaN(minReset)));
+                
+                if (isNaN(minReset) || (!minReset) || (minReset == "")) {
+                    document.getElementById("minReset").style["color"] = "red";
+                    return;
+                }
+                document.getElementById("minReset").style["color"] = "black";
+
+                console.log("mr "+minReset+ " -> "+(isNaN(minReset)));
+                
+
+                var tReset = minReset*60;
+                
+                socket.emit("reset", {
+                    data: tReset,
+                });
+            }
+
+            
+            function sendclick(event) {
+                if (event.keyCode === 13) {
+                    event.preventDefault();
+                    document.getElementById("btnReset").click();
+                }
+            }
+            socket.on('connect', function () {
+                socket.emit("sync");
+                document.getElementById("alertDisconnect").style.display = "none";
+                document.getElementById("alertConnect").style.display = "block";
+                document.getElementsByClassName("adminControls")[0].style["pointer-events"] = "auto";
+                document.getElementsByClassName("adminControls")[1].style["pointer-events"] = "auto";
+
+                setTimeout(function (){
+                    
+                    document.getElementById("alertConnect").style.display = "none";
+                    
+                },2000);
+            });
+
+            socket.on('disconnect', function () {
+                document.getElementsByClassName("adminControls")[0].style["pointer-events"] = "none";
+                document.getElementsByClassName("adminControls")[1].style["pointer-events"] = "none";
+                document.getElementById("alertDisconnect").style.display = "block";
+                
+            });
+
+
+        </script>  
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">    
+        <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    </head>
+    <body style="font-family: 'Roboto Mono', monospace; text-align: center;">
+        <div class="progress">
+            <div id="prog" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+        </div>
+        <div class="adminControls" style="display: none;">
+            <div class="form-inline">
+                <input id="minReset" class="form-control" placeholder="Minutes" onkeyup="sendclick(event)">    
+                <button id="btnReset" class="btn btn-outline-info" onclick="reset()">Reset</button>
+            </div>
+        </div>
+        <div id="timer" style="font-size:28vw;" >
+        </div>  
+        <div class="adminControls" style="display: none;">
+            <div class="form-inline" style="font-size:1.5em">
+                <button class="btn btn-outline-info btn-lg" onClick="plus(1)">+1</button>&nbsp;
+                <button class="btn btn-outline-info btn-lg" onClick="plus(2)">+2</button>&nbsp;
+                <button class="btn btn-outline-info btn-lg" onClick="plus(3)">+3</button>&nbsp;
+                <button class="btn btn-outline-info btn-lg" onClick="plus(4)">+4</button>&nbsp;
+                <button class="btn btn-outline-info btn-lg" onClick="plus(5)">+5</button>
+            </div>    
+        </div>
+        <div id="alertDisconnect" class="alert alert-danger" style="font-size: medium;display:none;" role="alert">
+            Disconnected from server: timer can be out of sync!
+        </div>
+        <div id="alertConnect" class="alert alert-success" style="font-size: medium;display:none;" role="alert">
+            Connected to server.
+        </div>
+    </body>
+    <script>
+        console.log(window.location.pathname);
+        if (window.location.pathname == "/admin"){
+            document.getElementsByClassName("adminControls")[0].style.display = "block";
+            document.getElementsByClassName("adminControls")[1].style.display = "block";
+        }
+    </script>
+</html>
+
