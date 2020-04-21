@@ -15,7 +15,7 @@
                 timerDiv = document.getElementById("timer");
                 t--;
                 var minutes = Math.floor(Math.abs(t)/60);
-                var seconds = (Math.abs(t) - minutes*60);
+                var seconds = Math.floor((Math.abs(t) - minutes*60));
 
                 timerDiv.innerText = 
                     ((t<0)?"-":"")+
