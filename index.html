@@ -7,6 +7,8 @@
             var socket = io();
             var t = 15;
             var i = t;
+            var key = "";
+            var successToken = "";
 
             socket.emit("sync");
 
@@ -72,17 +74,18 @@
                     i = t;
             });
 
+
             function plus(extra){
                 
                 var tReset = t+(extra);
                 console.log("tReset: "+tReset);
                 socket.emit("reset", {
-                    data: tReset,
+                    key: key,
+                    data: tReset
                 });
 
             }
 
-            
             function reset(){
                 var minReset = document.getElementById("minReset").value;
                 console.log("mr "+minReset+ " -> "+(isNaN(minReset)));
@@ -99,11 +102,74 @@
                 var tReset = minReset*60;
                 
                 socket.emit("reset", {
-                    data: tReset,
+                    key: key,
+                    data: tReset
                 });
             }
 
+            function setKey(){
+              
+                var newKey = document.getElementById("inputKey").value;
+        
+                successToken = Math.random().toString(36).substring(2,10);
+                console.log("setKey: <"+newKey+"> and st = ["+successToken+"]");
+
+                socket.emit("setKey", {
+                    key: key,
+                    newKey: newKey,
+                    successToken : successToken
+                });
+
+            }
+
+            function showInfo(msg){
+                document.getElementById("alertInfo").innerHTML = msg;
+                document.getElementById("alertInfo").style.display = "block";
+                setTimeout(function (){
+                    document.getElementById("alertInfo").style.display = "none";
+                },2000);
+
+            }
+
+
+            socket.on('keyCleared', () => {
+                key = "";
+                document.getElementById("keyPanel").style.display = "none";
+                document.getElementById("inputKey").value = "";
+                showInfo("Admin Key has been cleared!");
+            });
+
+
+            socket.on('keyChanged', (msg) => {
+                    var newKey = document.getElementById("inputKey").value;
+                    console.log("keyChanged with st = [" + msg.successToken+"], my st = ["+successToken+"]");
+                    if (successToken == msg.successToken){
+                        key = newKey;
+                        document.getElementById("inputKey").value = "";
+                        document.getElementById("currentKey").innerText = key;                
+                        document.getElementById("keyPanel").style.display = "block";
+                        showInfo("You have changed the key!");
+                    }else{
+                        document.getElementById("keyPanel").style.display = "none";
+                        showInfo("Somebody changed the key!");
+                    }
+                        
+            });
+
+            socket.on('keyUnchanged', (msg) => {
+                    console.log("keyUnchanged with st = [" + msg.successToken+"]");
+                    if (successToken == msg.successToken){
+                        showInfo("FORBIDDEN: Key Already set!");
+                    }else{
+                        showInfo("Somebody TRIED to changed the key!");   
+                    }
+                        
+                    
+            });
+
             
+
+
             function sendclick(event) {
                 if (event.keyCode === 13) {
                     event.preventDefault();
@@ -118,9 +184,7 @@
                 document.getElementsByClassName("adminControls")[1].style["pointer-events"] = "auto";
 
                 setTimeout(function (){
-                    
                     document.getElementById("alertConnect").style.display = "none";
-                    
                 },2000);
             });
 
@@ -164,19 +228,39 @@
                 <button class="btn btn-outline-info btn-lg" onClick="plus(45)">+0:45</button>
             </div>    
         </div>
+        <div class="adminControls" style="display: none;">
+            <br/><br/>
+            
+            <div class="form-inline">
+                <input id="inputKey" class="form-control" placeholder="Admin Key" >    
+                <button id="btnSetKey" class="btn btn-outline-info" onclick="setKey()">Set</button>
+            </div>
+            <br/><br/>
+            <div id="keyPanel" class="form-inline">
+                Current Admin Key: <h4><div id="currentKey"></div></h4>
+            </div>
+
+            <div id="alertInfo" class="alert alert-info" style="font-size: medium;display:none;" role="alert">
+            </div>
+
+        </div>
         <div id="alertDisconnect" class="alert alert-danger" style="font-size: medium;display:none;" role="alert">
             Disconnected from server: timer can be out of sync!
         </div>
         <div id="alertConnect" class="alert alert-success" style="font-size: medium;display:none;" role="alert">
             Connected to server.
         </div>
+
+
     </body>
     <script>
         console.log(window.location.pathname);
         if (window.location.pathname == "/admin"){
             document.getElementsByClassName("adminControls")[0].style.display = "block";
             document.getElementsByClassName("adminControls")[1].style.display = "block";
+            document.getElementsByClassName("adminControls")[2].style.display = "block";
         }
+        document.getElementById("keyPanel").style.display = "none";
     </script>
 </html>
 
