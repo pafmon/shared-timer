@@ -11,6 +11,10 @@ app.get('/', (req, res) => {
 app.get('/admin', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
+app.get('/piecon.js', (req, res) => {
+    res.sendFile(__dirname + '/piecon.min.js');
+});
+
 
 console.log("MasterKey: <"+masterKey+">");
 console.log("SessionKey: <"+sessionKey+">");

@@ -2,6 +2,7 @@
     <head>
         <meta name="mobile-web-app-capable" content="yes">
         <script src="/socket.io/socket.io.js"></script>
+        <script src="/piecon.js"></script>
         <script>
                 
             var socket = io();
@@ -11,6 +12,10 @@
             var successToken = "";
 
             socket.emit("sync");
+            
+            Piecon.setOptions({color: '#999999'});
+
+            var adminMode = (window.location.pathname == "/admin");
 
             setInterval(function () {
                 
@@ -19,52 +24,66 @@
                 var minutes = Math.floor(Math.abs(t)/60);
                 var seconds = Math.round((Math.abs(t) - minutes*60));
 
-                timerDiv.innerText = 
-                    ((t<0)?"-":"")+
+                var timeLeft = ((t<0)?"-":"")+
                     minutes+":"+
                     ((seconds<10)?"0"+seconds:seconds);
+                
+
+                timerDiv.innerText = timeLeft;
+                window.document.title = timeLeft + " 🙂";
+                
+                
                 
                 var progress = t/i*100;
                 document.getElementById("prog").style["width"] = progress+"%";
                 
+                Piecon.setProgress(100 - progress);
+
                 var baseProgressClassName = "progress-bar progress-bar-striped progress-bar-animated";
-                
-                if  ( progress > 20 && t>0){
+                               
+                // Default style
+                var backColor = 'black';
+                var fontColor = 'white';
+                var progressClassName = baseProgressClassName;
+                var pieconColor = '#1177ff';
+                var buttonsClassName = 'btn btn-outline-primary btn-lg';
 
-                    var backColor = 'black';
-                    var fontColor = 'white';
-                    document.getElementById("prog").className = baseProgressClassName;
-                    
-                    var buttons = document.getElementsByTagName("button");
-                    
-                    for (let btn of buttons) {
-                        btn.className  ="btn btn-outline-primary btn-lg";
-                    }
+                if ( ( progress <= 20 ) && (progress>0) && t>0 ) {
+                    // < 20% Style
+                    window.document.title = timeLeft + " 😨";
+                    fontColor = 'black';
+                    backColor = '#ffbf00';      
+                    progressClassName = baseProgressClassName + ' bg-danger';
+                    pieconColor = '#ffbb44';
+                    buttonsClassName = 'btn btn-outline-dark btn-lg';
 
-                } else if ( ( progress <= 20 ) && (progress>0) && t>0 ) {
-
-                    var fontColor = 'black';
-                    var backColor = '#ffbf00';
-                    var buttons = document.getElementsByTagName("button");
-                    for (let btn of buttons) {
-                        btn.className  = "btn btn-outline-dark btn-lg";
-                    }
-                    
-                    document.getElementById("prog").className = baseProgressClassName+" bg-danger";
                 } else if( t <= 0 ) {
-
-                    var fontColor = 'black';
-                    var backColor = '#e60000';
-                    var buttons = document.getElementsByTagName("button");
-                    for (let btn of buttons) {
-                        btn.className  = "btn btn-outline-dark btn-lg";
-                    }
-                    document.getElementById("prog").className = baseProgressClassName+" bg-danger";
+                    // Out of time! Style
+                    window.document.title = timeLeft + " 😖";
+                    fontColor = 'black';
+                    backColor = '#e60000';
+                    progressClassName = baseProgressClassName + ' bg-danger';
                     document.getElementById("prog").style["width"] = "100%";
+                    pieconColor = '#ff1111';
+                    buttonsClassName = "btn btn-outline-dark btn-lg";
+                
                 }
+                
                 document.body.style["color"] = fontColor;
                 document.body.style["background-color"] = backColor;
 
+                document.getElementById("prog").className = progressClassName;
+
+                Piecon.setOptions({color: pieconColor});
+
+                var buttons = document.getElementsByTagName("button");
+                for (let btn of buttons) {
+                        btn.className  = buttonsClassName;
+                }
+
+                if (adminMode)
+                    window.document.title = timeLeft + " 😎";
+                
             },1000);
 
 
@@ -252,14 +271,12 @@
 
     </body>
     <script>
-        console.log(window.location.pathname);
-        if (window.location.pathname == "/admin"){
+        if (adminMode){
             document.getElementsByClassName("adminControls")[0].style.display = "block";
             document.getElementsByClassName("adminControls")[1].style.display = "block";
             document.getElementsByClassName("adminControls")[2].style.display = "block";
         }
         document.getElementById("keyPanel").style.display = "none";
-        
     </script>
 </html>
 
