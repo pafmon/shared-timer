@@ -59,7 +59,7 @@ io.on('connection', (socket) => {
             return;
         }
         
-        console.log("SessioKey Change Request: <"+ sessionKey+ "> -> <"+msg.newKey + "> with key <"+msg.key+">");
+        console.log("Session Key Change Request: <"+ sessionKey+ "> -> <"+msg.newKey + "> with key <"+msg.key+">");
 
         if(msg.newKey == sessionKey || msg.key == sessionKey || sessionKey == "") {
             sessionKey = msg.newKey;
