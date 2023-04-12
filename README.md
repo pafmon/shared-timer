@@ -1,6 +1,6 @@
 # shared-timer
 
- Super simple (and **heroku ready**) shared timer using websockets (thanks to [socket.io](https://socket.io)).
+ Super simple (and **cloud ready**) shared timer using websockets (thanks to [socket.io](https://socket.io)).
 
 To install:
 ```
